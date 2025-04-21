@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>모바일 슈팅 게임</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            font-family: Arial, sans-serif;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            max-width: 100%;
+            max-height: 100%;
+            aspect-ratio: 9/16;  /* 모바일 세로 비율 */
+            touch-action: none;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            border-radius: 5px;
+        }
+
+        @media (orientation: portrait) {
+            #gameCanvas {
+                width: 100%;
+                height: auto;
+            }
+        }
+
+        @media (orientation: landscape) {
+            #gameCanvas {
+                height: 100vh;
+                width: auto;
+            }
+        }
+
+        #introVideo {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 2;
+            transition: opacity 0.5s ease;
+        }
+
+        .control-buttons {
+            position: fixed;
+            bottom: 5vh;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10vw;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .control-button {
+            width: 15vw;
+            height: 15vw;
+            max-width: 80px;
+            max-height: 80px;
+            border-radius: 50%;
+            background: rgba(0, 255, 255, 0.2);
+            border: 2px solid rgba(0, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+            pointer-events: auto;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            cursor: pointer;
+            outline: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+
+        .control-button::before {
+            content: attr(data-arrow);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <video id="introVideo" playsinline muted preload="auto">
+            <source src="intro.mp4" type="video/mp4">
+        </video>
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- 모바일용 컨트롤 버튼 -->
+        <div class="control-buttons">
+            <button id="leftBtn" class="control-button" data-arrow="←"></button>
+            <button id="rightBtn" class="control-button" data-arrow="→"></button>
+        </div>
+    </div>
+
+    <script>
+        // 가상 컨트롤러 버튼 설정
+        window.addEventListener('DOMContentLoaded', () => {
+            const leftBtn = document.getElementById('leftBtn');
+            const rightBtn = document.getElementById('rightBtn');
+            
+            if (leftBtn && rightBtn) {
+                leftBtn.addEventListener('touchstart', () => {
+                    window.keys = window.keys || {};
+                    window.keys["ArrowLeft"] = true;
+                });
+                leftBtn.addEventListener('touchend', () => {
+                    window.keys = window.keys || {};
+                    window.keys["ArrowLeft"] = false;
+                });
+                
+                rightBtn.addEventListener('touchstart', () => {
+                    window.keys = window.keys || {};
+                    window.keys["ArrowRight"] = true;
+                });
+                rightBtn.addEventListener('touchend', () => {
+                    window.keys = window.keys || {};
+                    window.keys["ArrowRight"] = false;
+                });
+                
+                // 마우스 이벤트 (테스트용)
+                leftBtn.addEventListener('mousedown', () => {
+                    window.keys = window.keys || {};
+                    window.keys["ArrowLeft"] = true;
+                });
+                leftBtn.addEventListener('mouseup', () => {
+                    window.keys = window.keys || {};
+                    window.keys["ArrowLeft"] = false;
+                });
+                
+                rightBtn.addEventListener('mousedown', () => {
+                    window.keys = window.keys || {};
+                    window.keys["ArrowRight"] = true;
+                });
+                rightBtn.addEventListener('mouseup', () => {
+                    window.keys = window.keys || {};
+                    window.keys["ArrowRight"] = false;
+                });
+            }
+        });
+    </script>
+    
+    <script src="game.js"></script>
+</body>
+</html>

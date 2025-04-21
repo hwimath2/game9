@@ -1,0 +1,181 @@
+/* 기본 스타일 초기화 */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #000;
+  position: relative;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  font-family: Arial, sans-serif;
+}
+
+/* 게임 컨테이너 */
+.game-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* 게임 캔버스: 세로형 모바일에 최적화 */
+#gameCanvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 9/16; /* 모바일 세로 비율 */
+  touch-action: none;
+  border: none;
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+  border-radius: 5px;
+}
+
+/* 화면 방향에 따른 스타일 조정 */
+@media (orientation: portrait) {
+  #gameCanvas {
+    width: 100%;
+    height: auto;
+  }
+}
+
+@media (orientation: landscape) {
+  #gameCanvas {
+    height: 100vh;
+    width: auto;
+  }
+}
+
+/* 인트로 비디오 */
+#introVideo {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 2;
+  transition: opacity 0.5s ease;
+}
+
+/* 모바일 컨트롤 버튼 */
+.control-buttons {
+  position: fixed;
+  bottom: 5vh;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 10vw;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.control-button {
+  width: 15vw;
+  height: 15vw;
+  max-width: 80px;
+  max-height: 80px;
+  border-radius: 50%;
+  background: rgba(0, 255, 255, 0.2);
+  border: 2px solid rgba(0, 255, 255, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  color: white;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  cursor: pointer;
+  outline: none;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+  transition: all 0.2s ease;
+}
+
+.control-button:active {
+  background: rgba(0, 255, 255, 0.5);
+  transform: scale(1.1);
+}
+
+/* 게임 오버 화면 */
+.game-over {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  z-index: 3;
+  text-align: center;
+}
+
+.game-over h2 {
+  font-size: 36px;
+  margin-bottom: 20px;
+  color: #ff3300;
+  text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
+}
+
+.game-over .score {
+  font-size: 24px;
+  margin-bottom: 30px;
+  color: #ffffff;
+}
+
+.game-over button {
+  padding: 15px 30px;
+  font-size: 18px;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to bottom, #00ccff, #0066ff);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(0, 153, 255, 0.7);
+  transition: all 0.3s ease;
+}
+
+.game-over button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(0, 153, 255, 0.9);
+}
+
+/* 이펙트 애니메이션 */
+@keyframes pulse {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.pulse-effect {
+  animation: pulse 2s infinite ease-in-out;
+}
+
+/* 버튼 효과 */
+.glow-button {
+  animation: glow 1.5s infinite alternate;
+}
+
+@keyframes glow {
+  from { box-shadow: 0 0 5px rgba(0, 255, 255, 0.5); }
+  to { box-shadow: 0 0 20px rgba(0, 255, 255, 0.9); }
+}
+
+/* 아이템 효과 */
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rotate-effect {
+  animation: rotate 3s linear infinite;
+}
