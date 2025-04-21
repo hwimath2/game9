@@ -18,7 +18,7 @@ for (const key in ASSETS) {
   IMG[key].onload = () => {
     if (++loadedCount === TOTAL_ASSETS) {
       imagesLoaded = true;
-      checkAllAssetsLoaded();
+      initGame(); // 이미지 로드 완료 후 바로 게임 초기화
     }
   };
 }
@@ -37,7 +37,6 @@ const ITEM_SIZE     = 60;
 const ITEM_INTERVAL = 10000; // 10초마다 아이템
 const BASE_SHOT_INT = 500;   // 자동 발사 기본 간격(ms)
 const SPEED_FACTOR  = 0.02;  // 적 속도 증가 비율 (초당)
-const VIDEO_DURATION = 5000; // 인트로 비디오 길이 (5초)
 
 // --- 4) 상태 변수 ---
 let player, enemies, missiles, items, explosions;
@@ -47,6 +46,7 @@ let lastItemTime, lastShotTime, startTime;
 let touchStartX = null;  // 터치 시작 위치
 let playerStartX = null; // 터치 시작시 플레이어 위치
 let bgScroll = 0;        // 배경 스크롤 위치
+let gameRunning = false; // 게임 실행 여부
 
 // 폭발 효과 클래스
 class Explosion {
@@ -133,49 +133,55 @@ const keys = {};
 window.addEventListener("keydown", e => keys[e.key] = true);
 window.addEventListener("keyup", e => keys[e.key] = false);
 
-// 터치 이벤트 처리
-canvas.addEventListener("touchstart", e => {
+// 터치 이벤트 처리 - player가 초기화된 후에 작동하도록 수정
+function setupTouchEvents() {
+  // 터치 이벤트 처리
+  canvas.addEventListener("touchstart", e => {
+    if (!player) return;
     touchStartX = e.touches[0].clientX;
     playerStartX = player.x;
     e.preventDefault();
-});
+  });
 
-canvas.addEventListener("touchmove", e => {
-    if (touchStartX !== null) {
-        const diff = e.touches[0].clientX - touchStartX;
-        let newX = playerStartX + diff;
-        
-        // 화면 경계 체크
-        newX = Math.max(0, Math.min(canvas.width - player.w, newX));
-        player.x = newX;
-    }
+  canvas.addEventListener("touchmove", e => {
+    if (!player || touchStartX === null) return;
+    const diff = e.touches[0].clientX - touchStartX;
+    let newX = playerStartX + diff;
+    
+    // 화면 경계 체크
+    newX = Math.max(0, Math.min(canvas.width - player.w, newX));
+    player.x = newX;
     e.preventDefault();
-});
+  });
 
-canvas.addEventListener("touchend", () => {
+  canvas.addEventListener("touchend", () => {
     touchStartX = null;
     playerStartX = null;
-});
+  });
 
-// 마우스 드래그도 지원 (테스트용)
-canvas.addEventListener("mousedown", e => {
+  // 마우스 드래그도 지원 (테스트용)
+  canvas.addEventListener("mousedown", e => {
+    if (!player) return;
     touchStartX = e.clientX;
     playerStartX = player.x;
-});
+  });
 
-canvas.addEventListener("mousemove", e => {
-    if (touchStartX !== null) {
-        const diff = e.clientX - touchStartX;
-        let newX = playerStartX + diff;
-        newX = Math.max(0, Math.min(canvas.width - player.w, newX));
-        player.x = newX;
-    }
-});
+  canvas.addEventListener("mousemove", e => {
+    if (!player || touchStartX === null) return;
+    const diff = e.clientX - touchStartX;
+    let newX = playerStartX + diff;
+    newX = Math.max(0, Math.min(canvas.width - player.w, newX));
+    player.x = newX;
+  });
 
-canvas.addEventListener("mouseup", () => {
+  canvas.addEventListener("mouseup", () => {
     touchStartX = null;
     playerStartX = null;
-});
+  });
+}
+
+// 터치 이벤트 설정 호출
+setupTouchEvents();
 
 // Player 클래스의 move 메서드 수정
 class Player {
@@ -427,6 +433,10 @@ function initGame() {
   startTime      = performance.now();
   lastItemTime   = startTime;
   lastShotTime   = startTime;
+  
+  // HTML에서 비디오가 제어되므로 여기서는 게임 루프만 시작
+  // HTML에서 window.gameStarted = true를 설정하면 게임 루프가 실행됨
+  gameRunning = true;
   requestAnimationFrame(gameLoop);
 }
 
@@ -541,107 +551,15 @@ function drawUI() {
   }
 }
 
-// --- 10) 인트로 비디오 및 게임 시작 ---
-// 인트로 비디오 관련 변수
-const introVideo = document.getElementById("introVideo");
-let gameStarted = false;
-let fadeEffect = 1.0; // 페이드 효과용 알파값
-
-// 비디오 이벤트 리스너 설정
-document.addEventListener('DOMContentLoaded', () => {
-  // 비디오 설정
-  introVideo.muted = true; // 자동 재생 정책 우회
-  
-  // 비디오 재생 완료 이벤트
-  introVideo.addEventListener('ended', () => {
-    console.log("비디오 재생 완료");
-    if (!gameStarted) {
-      startGameWithFade();
-    }
-  });
-  
-  // 비디오 재생 시도
-  console.log("비디오 재생 시도");
-  const playPromise = introVideo.play();
-  
-  if (playPromise !== undefined) {
-    playPromise.then(() => {
-      console.log("비디오 재생 시작됨");
-      
-      // 비디오 길이를 알고 있으므로, 끝나기 약간 전에 페이드아웃 시작
-      setTimeout(() => {
-        if (!gameStarted) {
-          console.log("페이드아웃 시작 (비디오 종료 전)");
-          startGameWithFade();
-        }
-      }, VIDEO_DURATION - 500); // 비디오 끝나기 0.5초 전에 페이드 시작
-      
-    }).catch(error => {
-      console.error("자동 재생 실패:", error);
-      startGameWithFade(); // 실패 시 바로 게임 시작
-    });
-  }
-  
-  // 안전장치: 비디오 길이보다 약간 긴 타임아웃
-  setTimeout(() => {
-    if (!gameStarted) {
-      console.log("안전 타임아웃: 게임 시작");
-      startGameWithFade();
-    }
-  }, VIDEO_DURATION + 1000); // 비디오 길이 + 1초의 버퍼
-});
-
-// 모든 에셋 로드 확인
-function checkAllAssetsLoaded() {
-  if (imagesLoaded) {
-    console.log("모든 이미지 로드 완료");
-  }
-}
-
-// 페이드 효과와 함께 게임 시작
-function startGameWithFade() {
-  if (gameStarted) return; // 중복 실행 방지
-  gameStarted = true;
-  
-  // 게임 초기화
-  initGame();
-  
-  // 부드러운 페이드를 위한 페이드 지속 시간
-  const FADE_DURATION = 1000; // 1초 동안 페이드
-  const startTime = performance.now();
-  
-  // 개선된 페이드 트랜지션 함수
-  function improvedFadeTransition(timestamp) {
-    const elapsed = timestamp - startTime;
-    const progress = Math.min(elapsed / FADE_DURATION, 1.0);
-    
-    // 비디오 페이드아웃
-    fadeEffect = 1.0 - progress;
-    introVideo.style.opacity = fadeEffect;
-    
-    // 완전히 페이드아웃되면 비디오 숨김
-    if (progress >= 1.0) {
-      introVideo.style.display = 'none';
-    } else {
-      requestAnimationFrame(improvedFadeTransition);
-    }
-  }
-  
-  // 페이드 시작
-  requestAnimationFrame(improvedFadeTransition);
-}
-
 // --- 11) 메인 게임 루프 ---
 function gameLoop(now) {
+  if (!gameRunning) {
+    // 게임이 실행 중이 아니면 루프 중단
+    return;
+  }
+
   // 캔버스 초기화
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-  // 페이드인 효과
-  if (fadeEffect > 0) {
-    ctx.globalAlpha = 1.0 - fadeEffect;
-  } else {
-    ctx.globalAlpha = 1.0;
-  }
   
   // 1) 배경 및 UI 그리기
   drawBackground();
@@ -769,7 +687,6 @@ function gameLoop(now) {
   }
 
   // 10) 다음 프레임
-  ctx.globalAlpha = 1.0; // 알파값 리셋
   requestAnimationFrame(gameLoop);
 }
 
@@ -778,3 +695,15 @@ function restartGame() {
   gameOver = false;
   initGame();
 }
+
+// HTML에서 게임 시작 함수 호출할 수 있도록 전역으로 노출
+window.startGame = function() {
+  // 이미지가 로드되었으면 바로 게임 시작, 아니면 로드 완료 시 시작
+  if (imagesLoaded) {
+    gameRunning = true;
+    requestAnimationFrame(gameLoop);
+  }
+};
+
+// 초기화 시 이미지 로드 완료되면 자동으로 게임 준비는 하되
+// 실제 게임 실행은 HTML에서 startGame() 호출 시 시작
