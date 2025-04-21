@@ -33,6 +33,7 @@
             touch-action: none;
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
             border-radius: 5px;
+            z-index: 1; /* 캔버스가 비디오 위에 오도록 설정 */
         }
 
         @media (orientation: portrait) {
@@ -53,7 +54,8 @@
             position: absolute;
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain; /* contain으로 변경하여 비율 유지하며 맞춤 */
+            background: black;
             z-index: 2;
             transition: opacity 0.5s ease;
         }
@@ -67,7 +69,7 @@
             justify-content: space-between;
             padding: 0 10vw;
             pointer-events: none;
-            z-index: 1;
+            z-index: 3; /* 컨트롤이 가장 위에 오도록 설정 */
         }
 
         .control-button {
@@ -115,6 +117,62 @@
     </div>
 
     <script>
+        // 직접 인트로 비디오 처리
+        const introVideo = document.getElementById('introVideo');
+        const gameCanvas = document.getElementById('gameCanvas');
+        let gameStarted = false;
+
+        // 비디오 종료 시 게임 시작
+        introVideo.addEventListener('ended', () => {
+            startGame();
+        });
+
+        // 비디오 재생 실패 시 대비
+        introVideo.addEventListener('error', () => {
+            startGame();
+        });
+
+        // 5초 후 비디오 종료 (타임아웃)
+        setTimeout(() => {
+            if (!gameStarted) {
+                startGame();
+            }
+        }, 5000);
+
+        // 비디오 재생 시도
+        try {
+            const playPromise = introVideo.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(() => {
+                    // 자동 재생 정책으로 재생 실패 시
+                    startGame();
+                });
+            }
+        } catch (e) {
+            // 기타 오류 처리
+            startGame();
+        }
+
+        // 게임 시작 함수
+        function startGame() {
+            if (gameStarted) return;
+            gameStarted = true;
+            
+            // 페이드 아웃 애니메이션
+            let opacity = 1;
+            const fadeOutInterval = setInterval(() => {
+                opacity -= 0.05;
+                introVideo.style.opacity = opacity;
+                
+                if (opacity <= 0) {
+                    clearInterval(fadeOutInterval);
+                    introVideo.style.display = 'none';
+                    // 게임 캔버스를 맨 앞으로
+                    gameCanvas.style.zIndex = 2;
+                }
+            }, 50);
+        }
+
         // 가상 컨트롤러 버튼 설정
         window.addEventListener('DOMContentLoaded', () => {
             const leftBtn = document.getElementById('leftBtn');
